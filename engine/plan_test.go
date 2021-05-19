@@ -44,3 +44,18 @@ func TestPlanShouldFindNode(t *testing.T) {
 			node.Parent.Parent.Parent.ID, expectedParentParentParentID)
 	}
 }
+
+func TestPlanShouldBeCorrectlyDisplayed(t *testing.T) {
+	plan := createPlan()
+	representation := plan.Display(" - ")
+	expected :=
+		`a - a1 - a11 - a111
+                - a112
+                - a113
+          - a12
+   b
+   c`
+	if representation != expected {
+		t.Errorf("Plan display returns: %s, but expected: %s", representation, expected)
+	}
+}

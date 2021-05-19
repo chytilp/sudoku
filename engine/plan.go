@@ -2,51 +2,8 @@ package engine
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 )
-
-//NodeType enum type.
-type NodeType int
-
-//Values of NodeType enum.
-const (
-	IDNode NodeType = iota
-	ValueNode
-)
-
-//Node represents one node in solution path.
-type Node struct {
-	NodeType NodeType
-	Children []*Node
-	ID       string
-	Parent   *Node
-}
-
-//String returns node representation.
-func (n *Node) String() string {
-	return fmt.Sprintf("id=%s, type=%d", n.ID, n.NodeType)
-}
-
-//CreateNode creates new node with specified ID.
-func CreateNode(ID string) *Node {
-	ID = strings.TrimSpace(ID)
-	nodeType := IDNode
-	if len(ID) == 1 {
-		_, err := strconv.Atoi(ID)
-		if err == nil {
-			nodeType = ValueNode
-		}
-	}
-	node := Node{NodeType: nodeType, ID: strings.ToLower(ID)}
-	return &node
-}
-
-//AddChild method adds new node to child collcetion.
-func (n *Node) AddChild(childNode *Node) {
-	childNode.Parent = n
-	n.Children = append(n.Children, childNode)
-}
 
 //Plan represents all found solutions of 1 game.
 type Plan struct {
@@ -72,27 +29,29 @@ func (p *Plan) AddNode(node *Node, rootNodeID string, parentPath string) error {
 		rootNode.AddChild(node)
 		return nil
 	}
-	parentNodes := strings.Split(parentPath, "/")
-	wantedNode := p.findNodeByID(rootNode, parentNodes[0])
-	if wantedNode == nil {
-		return fmt.Errorf("ParentNodeID: %s was not found in plan", parentNodes[0])
+	parentNodePaths := strings.Split(parentPath, "/")
+	previous := rootNode
+	for _, parentNodePath := range parentNodePaths {
+		parentNode := p.findNodeByID(previous, parentNodePath)
+		if parentNode == nil {
+			return fmt.Errorf("ParentNodeID: %s was not found in plan", parentNodePath)
+		}
+		if parentNodePath == parentNodePaths[len(parentNodePaths)-1] {
+			//is it last part?
+			parentNode.AddChild(node)
+		} else {
+			previous = parentNode
+		}
 	}
-	wantedChildNode := p.findNodeByID(wantedNode, parentNodes[1])
-	if wantedChildNode == nil {
-		return fmt.Errorf("ParentNodeID: %s was not found in plan", parentNodes[1])
-	}
-	wantedChildNode.AddChild(node)
 	return nil
 }
 
 //FindNode method searches for node by ID in branch which is expressed by rootNodeId.
 func (p *Plan) FindNode(rootNodeID string, wantedNodeID string) (*Node, error) {
 	var root *Node
-	if len(rootNodeID) == 0 {
-		for _, root = range p.Paths {
-			if root.ID == strings.ToLower(wantedNodeID) {
-				break
-			}
+	for _, root = range p.Paths {
+		if root.ID == strings.ToLower(rootNodeID) {
+			break
 		}
 	}
 	if root == nil {
@@ -118,4 +77,9 @@ func (p *Plan) findNodeByID(rootNode *Node, wantedNodeID string) *Node {
 //FindSolutions method searches for possible solution paths for game.
 func (p *Plan) FindSolutions() (*bool, error) {
 	return nil, nil
+}
+
+//Display returns text represantion of tree.
+func (p *Plan) Display(sep string) string {
+	return ""
 }
