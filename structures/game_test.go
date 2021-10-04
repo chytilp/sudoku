@@ -15,7 +15,7 @@ const game1 string = `8..|94.|..5
     ..4|.6.|...
     9..|.17|..6`
 
-func TestGameObjectCorrectlyCreated(t *testing.T) {
+func TestGameObjectCreatedFromString(t *testing.T) {
 	g, err := NewGameFromString(game1)
 	if err != nil {
 		t.Errorf("Game should be succesfully created, but err: %v", err)
@@ -124,7 +124,7 @@ func TestGameCellFreeValues(t *testing.T) {
 	}
 	freeValues, err := g.CellFreeValues(c)
 	if err != nil {
-		t.Errorf("Cell id=%s free values should be retrurned, but err: %v", id, err)
+		t.Errorf("Cell id=%s free values should be returned, but err: %v", id, err)
 	}
 	expected := []uint8{2, 3, 7}
 	if !reflect.DeepEqual(freeValues, expected) {

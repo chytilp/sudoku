@@ -23,6 +23,8 @@ var (
 	ErrOnlyOneArgumentShouldBeTrue               error = errors.New("Only one argument from (row, column, square) should be true")
 )
 
+//Package private functions.
+
 func valueFoundInSlice(slice []uint8, value uint8) bool {
 	index := sort.Search(len(slice), func(i int) bool { return slice[i] >= value })
 	found := index < len(slice) && slice[index] == value
@@ -94,6 +96,14 @@ func processRowPart(part string, rowIndex uint8, columns string) ([]*cell, error
 	return cells, nil
 }
 
+//Game struct represents one sudoku game.
+type Game struct {
+	cells         map[string]*cell
+	solutionSteps []string
+}
+
+//Game constructors.
+
 //NewGameFromString creates Game object from string representation.
 func NewGameFromString(textCells string) (*Game, error) {
 	cells, err := parseCells(textCells)
@@ -121,11 +131,7 @@ func NewGameFromCells(cells []*cell) (*Game, error) {
 	return &g, nil
 }
 
-//Game struct represnts one sudoku game.
-type Game struct {
-	cells         map[string]*cell
-	solutionSteps []string
-}
+//Game public methods.
 
 //AddCell method add new cell to the game.
 func (g *Game) AddCell(c *cell) error {
@@ -193,6 +199,76 @@ func (g *Game) Validate() (*bool, *bool, *bool, error) {
 	squaresOk := len(invalidSquares) == 0
 	return &rowsOk, &columnsOk, &squaresOk, nil
 }
+
+//CellFreeValues returns for the cell which values can have yet.
+func (g *Game) CellFreeValues(cell *cell) ([]uint8, error) {
+	rowValues, err := g.specifiedCellsValues(cell.Row(), 0, 0)
+	if err != nil {
+		return nil, err
+	}
+	colValues, err := g.specifiedCellsValues(0, cell.Column(), 0)
+	if err != nil {
+		return nil, err
+	}
+	squareValues, err := g.specifiedCellsValues(0, 0, cell.Square())
+	if err != nil {
+		return nil, err
+	}
+	var result []uint8
+	var rFound, cFound, sFound bool
+	for v := 1; v < 10; v++ {
+		rFound = valueFoundInSlice(rowValues, uint8(v))
+		cFound = valueFoundInSlice(colValues, uint8(v))
+		sFound = valueFoundInSlice(squareValues, uint8(v))
+		if !rFound && !cFound && !sFound {
+			result = append(result, uint8(v))
+		}
+	}
+	return result, nil
+}
+
+//GameVisual returns visual representation of the game.
+func (g *Game) GameVisual() string {
+	var visual string
+	for r := 1; r < 10; r++ {
+		line := ""
+		for c := 1; c < 10; c++ {
+			line += g.findCellValue(uint8(r), uint8(c))
+		}
+		visual += line[:3] + "|" + line[3:6] + "|" + line[6:] + "\n"
+	}
+	return visual
+}
+
+//EmptyCells returns slice of empty cells in the game.
+func (g *Game) EmptyCells() []string {
+	columns := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i"}
+	var ok bool
+	var result []string
+	var id string
+	for r := 1; r < 10; r++ {
+		for _, c := range columns {
+			id = string(c) + fmt.Sprintf("%d", r)
+			_, ok = g.cells[id]
+			if !ok {
+				result = append(result, id)
+			}
+		}
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i] < result[j] })
+	return result
+}
+
+//ShowSolutionCells prints all solution cells of the game.
+func (g *Game) ShowSolutionCells() {
+	for _, c := range g.cells {
+		if c.SolutionCell() {
+			fmt.Printf("%s\n", c)
+		}
+	}
+}
+
+//Game private methods.
 
 func (g *Game) validateEntities(rows bool, columns bool, squares bool) ([]uint8, error) {
 	if (rows && columns) || (rows && squares) || (columns && squares) {
@@ -273,33 +349,6 @@ func (g *Game) specifiedCellsValues(row uint8, column uint8, square uint8) ([]ui
 	return result, nil
 }
 
-//CellFreeValues returns for the cell which values can have yet.
-func (g *Game) CellFreeValues(cell *cell) ([]uint8, error) {
-	rowValues, err := g.specifiedCellsValues(cell.Row(), 0, 0)
-	if err != nil {
-		return nil, err
-	}
-	colValues, err := g.specifiedCellsValues(0, cell.Column(), 0)
-	if err != nil {
-		return nil, err
-	}
-	squareValues, err := g.specifiedCellsValues(0, 0, cell.Square())
-	if err != nil {
-		return nil, err
-	}
-	var result []uint8
-	var rFound, cFound, sFound bool
-	for v := 1; v < 10; v++ {
-		rFound = valueFoundInSlice(rowValues, uint8(v))
-		cFound = valueFoundInSlice(colValues, uint8(v))
-		sFound = valueFoundInSlice(squareValues, uint8(v))
-		if !rFound && !cFound && !sFound {
-			result = append(result, uint8(v))
-		}
-	}
-	return result, nil
-}
-
 func (g *Game) findCellValue(rowIdx uint8, colIdx uint8) string {
 	for _, c := range g.cells {
 		if c.Row() == rowIdx && c.Column() == colIdx {
@@ -307,45 +356,4 @@ func (g *Game) findCellValue(rowIdx uint8, colIdx uint8) string {
 		}
 	}
 	return EmptyCellTextValue
-}
-
-//GameVisual returns visual representation of the game.
-func (g *Game) GameVisual() string {
-	var visual string
-	for r := 1; r < 10; r++ {
-		line := ""
-		for c := 1; c < 10; c++ {
-			line += g.findCellValue(uint8(r), uint8(c))
-		}
-		visual += line[:3] + "|" + line[3:6] + "|" + line[6:] + "\n"
-	}
-	return visual
-}
-
-//EmptyCells returns slice of empty cells in the game.
-func (g *Game) EmptyCells() []string {
-	columns := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i"}
-	var ok bool
-	var result []string
-	var id string
-	for r := 1; r < 10; r++ {
-		for _, c := range columns {
-			id = string(c) + fmt.Sprintf("%d", r)
-			_, ok = g.cells[id]
-			if !ok {
-				result = append(result, id)
-			}
-		}
-	}
-	sort.Slice(result, func(i, j int) bool { return result[i] < result[j] })
-	return result
-}
-
-//ShowSolutionCells prints all solution cells of the game.
-func (g *Game) ShowSolutionCells() {
-	for _, c := range g.cells {
-		if c.SolutionCell() {
-			fmt.Printf("%s\n", c)
-		}
-	}
 }

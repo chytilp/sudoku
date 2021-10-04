@@ -1,7 +1,7 @@
 package engine
 
 import (
-
+	"errors"
 	//"math/rand"
 
 	"github.com/chytilp/sudoku/structures"
@@ -19,30 +19,20 @@ func (e *Engine) PrintStatus() {
 
 //MakeStep creates one step in solving sudoku game.
 func (e *Engine) MakeStep() (*bool, error) {
-	emptyCells := e.game.EmptyCells()
-	//index := rand.Intn(len(emptyCells))
+	candidates, err := e.SelectBestCandidates()
+	if err != nil {
+		return nil, err
+	}
 	result := false
-	for _, cellID := range emptyCells {
-		cell, err := structures.NewSolutionCell(cellID, 0)
-		if err != nil {
-			return nil, err
-		}
-		values, err := e.game.CellFreeValues(cell)
-		if err != nil {
-			return nil, err
-		}
-		//tmp := make([]string, len(values))
-		//for i, val := range values {
-		//	tmp[i] = fmt.Sprintf("%d", val)
-		//}
-		//sValues := strings.Join(tmp, ",")
-		//fmt.Printf("cell: id=%s, values=%s\n", cellId, sValues)
+	for cellID, values := range candidates {
 		if len(values) == 1 {
-			cell.SetValue(values[0])
+			// simplest case, candidates has only best value.
+			cell, _ := structures.NewSolutionCell(cellID, values[0])
 			e.game.AddCell(cell)
 			result = true
 			return &result, nil
 		}
+		//TODO: not implemented yet - cases with len(values) != 1.
 	}
 	return &result, nil
 }
@@ -111,7 +101,7 @@ func (e *Engine) Run() (*bool, error) {
 		}
 	}
 	if !e.IsFinished() {
-
+		return nil, errors.New("game was not finished in 100 steps")
 	}
 	return &result, nil
 }
@@ -119,5 +109,6 @@ func (e *Engine) Run() (*bool, error) {
 //MakePlan analyzes game and returns Plan of solutions (paths).
 func (e *Engine) MakePlan() (*Plan, error) {
 	var plan Plan
+	//TODO: create plan
 	return &plan, nil
 }

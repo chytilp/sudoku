@@ -29,31 +29,7 @@ const (
 	EmptyCellTextValue string = "."
 )
 
-// NewCell creates cell object with solutionCell=false.
-func NewCell(id string, value uint8) (*cell, error) {
-	return createCell(id, value, false)
-}
-
-// NewCellFromString creates cell object from string representation.
-func NewCellFromString(text string) (*cell, error) {
-	// format a1=5 o resp. a1=5 x
-	id := string(text[:2])
-	tmp, err := strconv.ParseUint(string(text[3]), 10, 8)
-	if err != nil {
-		return nil, err
-	}
-	value := uint8(tmp)
-	if string(text[5]) == "x" {
-		return NewSolutionCell(id, value)
-	} else {
-		return NewCell(id, value)
-	}
-}
-
-// NewSolutionCell creates cell object with solutionCell=true.
-func NewSolutionCell(id string, value uint8) (*cell, error) {
-	return createCell(id, value, true)
-}
+// Package private functions.
 
 func createCell(id string, value uint8, solution bool) (*cell, error) {
 	id, err := validateIDFormat(id)
@@ -102,11 +78,41 @@ func validateRow(id string) (uint8, error) {
 	return uint8(row), nil
 }
 
+// Cell struct represents one cell in sudoku game.
 type cell struct {
 	Id           string
 	value        *uint8
 	solutionCell bool
 }
+
+// Cell struct constructors.
+
+// NewCell creates cell object with solutionCell=false.
+func NewCell(id string, value uint8) (*cell, error) {
+	return createCell(id, value, false)
+}
+
+// NewCellFromString creates cell object from string representation.
+func NewCellFromString(text string) (*cell, error) {
+	// format a1=5 o resp. a1=5 x
+	id := string(text[:2])
+	tmp, err := strconv.ParseUint(string(text[3]), 10, 8)
+	if err != nil {
+		return nil, err
+	}
+	value := uint8(tmp)
+	if string(text[5]) == "x" {
+		return NewSolutionCell(id, value)
+	}
+	return NewCell(id, value)
+}
+
+// NewSolutionCell creates cell object with solutionCell=true.
+func NewSolutionCell(id string, value uint8) (*cell, error) {
+	return createCell(id, value, true)
+}
+
+//Cell struct public methods.
 
 //Value returns cell value.
 func (c *cell) Value() uint8 {
