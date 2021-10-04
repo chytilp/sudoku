@@ -31,13 +31,13 @@ func valueFoundInSlice(slice []uint8, value uint8) bool {
 	return found
 }
 
-func parseCells(textCells string) ([]*cell, error) {
+func parseCells(textCells string) ([]*Cell, error) {
 	rows := strings.Split(textCells, "\n")
 	if len(rows) != 9 {
 		return nil, ErrParseCellsNoNineRows
 	}
 	var err error
-	var cells, tmp []*cell
+	var cells, tmp []*Cell
 	for index, row := range rows {
 		tmp, err = parseRow(row, uint8(index+1))
 		if err != nil {
@@ -48,12 +48,12 @@ func parseCells(textCells string) ([]*cell, error) {
 	return cells, nil
 }
 
-func parseRow(textRow string, rowIndex uint8) ([]*cell, error) {
+func parseRow(textRow string, rowIndex uint8) ([]*Cell, error) {
 	parts := strings.Split(strings.TrimSpace(textRow), "|")
 	if len(parts) != 3 {
 		return nil, fmt.Errorf(ErrParseCellsNoThreePartsMsg, textRow)
 	}
-	var cells, tmp []*cell
+	var cells, tmp []*Cell
 	var err error
 	cells, err = processRowPart(parts[0], rowIndex, "abc")
 	if err != nil {
@@ -72,12 +72,12 @@ func parseRow(textRow string, rowIndex uint8) ([]*cell, error) {
 	return cells, nil
 }
 
-func processRowPart(part string, rowIndex uint8, columns string) ([]*cell, error) {
+func processRowPart(part string, rowIndex uint8, columns string) ([]*Cell, error) {
 	if len(part) != 3 {
 		return nil, fmt.Errorf(ErrParseCellsNoThreeCharsMsg, part)
 	}
-	var cells []*cell
-	var c *cell
+	var cells []*Cell
+	var c *Cell
 	var value uint64
 	var err error
 	for index, char := range part {
@@ -98,7 +98,7 @@ func processRowPart(part string, rowIndex uint8, columns string) ([]*cell, error
 
 //Game struct represents one sudoku game.
 type Game struct {
-	cells         map[string]*cell
+	cells         map[string]*Cell
 	solutionSteps []string
 }
 
@@ -118,9 +118,9 @@ func NewGameFromString(textCells string) (*Game, error) {
 }
 
 //NewGameFromCells creates Game object from slice of cells.
-func NewGameFromCells(cells []*cell) (*Game, error) {
+func NewGameFromCells(cells []*Cell) (*Game, error) {
 	g := Game{}
-	g.cells = make(map[string]*cell)
+	g.cells = make(map[string]*Cell)
 	var err error
 	for _, c := range cells {
 		err = g.AddCell(c)
@@ -134,7 +134,7 @@ func NewGameFromCells(cells []*cell) (*Game, error) {
 //Game public methods.
 
 //AddCell method add new cell to the game.
-func (g *Game) AddCell(c *cell) error {
+func (g *Game) AddCell(c *Cell) error {
 	_, ok := g.cells[c.Id]
 	if ok {
 		return fmt.Errorf(ErrDuplicatedCellInGameMsg, c.Id)
@@ -160,7 +160,7 @@ func (g *Game) AddStringCell(textCell string) error {
 }
 
 //Cell returns cell from game by id in parameter.
-func (g *Game) Cell(id string) (*cell, error) {
+func (g *Game) Cell(id string) (*Cell, error) {
 	c, ok := g.cells[id]
 	if !ok {
 		return nil, fmt.Errorf(ErrCellWasNotFoundMsg, id)
@@ -201,7 +201,7 @@ func (g *Game) Validate() (*bool, *bool, *bool, error) {
 }
 
 //CellFreeValues returns for the cell which values can have yet.
-func (g *Game) CellFreeValues(cell *cell) ([]uint8, error) {
+func (g *Game) CellFreeValues(cell *Cell) ([]uint8, error) {
 	rowValues, err := g.specifiedCellsValues(cell.Row(), 0, 0)
 	if err != nil {
 		return nil, err

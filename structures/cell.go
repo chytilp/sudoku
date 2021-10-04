@@ -31,7 +31,7 @@ const (
 
 // Package private functions.
 
-func createCell(id string, value uint8, solution bool) (*cell, error) {
+func createCell(id string, value uint8, solution bool) (*Cell, error) {
 	id, err := validateIDFormat(id)
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func createCell(id string, value uint8, solution bool) (*cell, error) {
 	if err != nil {
 		return nil, err
 	}
-	c := cell{Id: id, solutionCell: solution}
+	c := Cell{Id: id, solutionCell: solution}
 	c.SetValue(value)
 	return &c, nil
 }
@@ -79,7 +79,7 @@ func validateRow(id string) (uint8, error) {
 }
 
 // Cell struct represents one cell in sudoku game.
-type cell struct {
+type Cell struct {
 	Id           string
 	value        *uint8
 	solutionCell bool
@@ -88,12 +88,12 @@ type cell struct {
 // Cell struct constructors.
 
 // NewCell creates cell object with solutionCell=false.
-func NewCell(id string, value uint8) (*cell, error) {
+func NewCell(id string, value uint8) (*Cell, error) {
 	return createCell(id, value, false)
 }
 
-// NewCellFromString creates cell object from string representation.
-func NewCellFromString(text string) (*cell, error) {
+// NewCellFromString creates Cell object from string representation.
+func NewCellFromString(text string) (*Cell, error) {
 	// format a1=5 o resp. a1=5 x
 	id := string(text[:2])
 	tmp, err := strconv.ParseUint(string(text[3]), 10, 8)
@@ -107,15 +107,15 @@ func NewCellFromString(text string) (*cell, error) {
 	return NewCell(id, value)
 }
 
-// NewSolutionCell creates cell object with solutionCell=true.
-func NewSolutionCell(id string, value uint8) (*cell, error) {
+// NewSolutionCell creates Cell object with solutionCell=true.
+func NewSolutionCell(id string, value uint8) (*Cell, error) {
 	return createCell(id, value, true)
 }
 
 //Cell struct public methods.
 
 //Value returns cell value.
-func (c *cell) Value() uint8 {
+func (c *Cell) Value() uint8 {
 	if c.value == nil {
 		return EmptyCellValue
 	}
@@ -123,7 +123,7 @@ func (c *cell) Value() uint8 {
 }
 
 //TextValue returns cell value in text format.
-func (c *cell) TextValue() string {
+func (c *Cell) TextValue() string {
 	value := c.Value()
 	if value == EmptyCellValue {
 		return ""
@@ -132,7 +132,7 @@ func (c *cell) TextValue() string {
 }
 
 //SetValue can validate and set cell value.
-func (c *cell) SetValue(value uint8) error {
+func (c *Cell) SetValue(value uint8) error {
 	if value < 0 || value > 9 {
 		return fmt.Errorf(ErrInvalidValueMsg, value)
 	}
@@ -147,30 +147,30 @@ func (c *cell) SetValue(value uint8) error {
 }
 
 //Row returns cell row index.
-func (c *cell) Row() uint8 {
+func (c *Cell) Row() uint8 {
 	row, _ := validateRow(c.Id)
 	return row
 }
 
 //TextColumn returns cell column index in text format ex.a,b,c...
-func (c *cell) TextColumn() string {
+func (c *Cell) TextColumn() string {
 	idPart := strings.ToLower(string(c.Id[0]))
 	return idPart
 }
 
 //Column returns cell column index.
-func (c *cell) Column() uint8 {
+func (c *Cell) Column() uint8 {
 	column, _ := validateColumn(c.Id)
 	return column
 }
 
 //SolutionCell returns if cell is solution cell or not.
-func (c *cell) SolutionCell() bool {
+func (c *Cell) SolutionCell() bool {
 	return c.solutionCell
 }
 
 //Square returns cell square index.
-func (c *cell) Square() uint8 {
+func (c *Cell) Square() uint8 {
 	r := c.Row()
 	s := c.Column()
 	if r >= 1 && r <= 3 {
@@ -208,7 +208,7 @@ func (c *cell) Square() uint8 {
 }
 
 //String returns string representation of cell.
-func (c *cell) String() string {
+func (c *Cell) String() string {
 	var mark string
 	if c.solutionCell {
 		mark = "x"
@@ -219,6 +219,6 @@ func (c *cell) String() string {
 }
 
 //IsEqual returns if cell are equal (same row and column) or not.
-func (c *cell) IsEqual(b *cell) bool {
+func (c *Cell) IsEqual(b *Cell) bool {
 	return c.Id == b.Id
 }

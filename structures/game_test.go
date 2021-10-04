@@ -34,7 +34,7 @@ func TestGameObjectCreatedFromString(t *testing.T) {
 }
 
 func TestGameCreateEmptyObject(t *testing.T) {
-	var cells []*cell
+	var cells []*Cell
 	g, err := NewGameFromCells(cells)
 	if err != nil {
 		t.Errorf("Game should be succesfully created, but err: %v", err)

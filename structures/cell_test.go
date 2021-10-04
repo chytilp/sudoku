@@ -36,7 +36,7 @@ func TestCellCorrectCoordinates(t *testing.T) {
 func TestCellCreateFromString(t *testing.T) {
 	var tests = []struct {
 		input                string
-		expectedId           string
+		expectedID           string
 		expectedValue        uint8
 		expectedSolutionCell bool
 	}{
@@ -46,8 +46,8 @@ func TestCellCreateFromString(t *testing.T) {
 	}
 	for _, test := range tests {
 		c, _ := NewCellFromString(test.input)
-		if c.Id != test.expectedId {
-			t.Errorf("NewCellFromString creates cell, Id=%s, but expected was Id=%s", c.Id, test.expectedId)
+		if c.Id != test.expectedID {
+			t.Errorf("NewCellFromString creates cell, Id=%s, but expected was Id=%s", c.Id, test.expectedID)
 		}
 		if c.Value() != test.expectedValue {
 			t.Errorf("NewCellFromString creates cell, Value=%d, but expected was Value=%d", c.Value(), test.expectedValue)
@@ -98,7 +98,7 @@ func TestCellsAreEqual(t *testing.T) {
 }
 
 func TestCellSetValue(t *testing.T) {
-	var expected uint8 = 0
+	var expected uint8
 	c, _ := NewCell("a1", expected)
 	if c.Value() != expected {
 		t.Errorf("Cell c: %s expected value: %d, but is %d.", c, expected, c.Value())

@@ -51,9 +51,14 @@ func (n *Node) AddChild(childNode *Node) {
 	n.Children = append(n.Children, childNode)
 }
 
-//AddChildren methods adds more new nodes.
+//AddChildren method adds more new nodes.
 func (n *Node) AddChildren(children []*Node) {
 	for _, child := range children {
 		n.AddChild(child)
 	}
+}
+
+//IsEqual method compare two nodes, if they are equal.
+func (n *Node) IsEqual(n2 *Node) bool {
+	return n.ID == n2.ID
 }

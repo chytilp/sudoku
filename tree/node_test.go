@@ -33,3 +33,43 @@ func TestNodeObjectCreatedParams(t *testing.T) {
 			stringRepr)
 	}
 }
+
+func TestNodeObjWithChild(t *testing.T) {
+	ID := "a1"
+	n := CreateNode(ID)
+	childNode := CreateNode("a1-1")
+	n.AddChild(childNode)
+	if len(n.Children) != 1 {
+		t.Errorf("Node %s should have one child %s, but has %d children", n, childNode,
+			len(n.Children))
+	}
+	if !childNode.IsEqual(n.Children[0]) {
+		t.Errorf("Nodes %v and %v should be equal.", childNode, n.Children[0])
+	}
+	if !n.IsEqual(childNode.Parent) {
+		t.Errorf("Nodes %v and %v should be equal.", n, childNode.Parent)
+	}
+}
+
+func TestNodeObjWithChildren(t *testing.T) {
+	n := CreateNode("a1")
+	childNode1 := CreateNode("a1-1")
+	childNode2 := CreateNode("a1-2")
+	children := []*Node{childNode1, childNode2}
+	n.AddChildren(children)
+	if len(n.Children) != 2 {
+		t.Errorf("Node %s should have two child , but has %d children", n, len(n.Children))
+	}
+	if !childNode1.IsEqual(n.Children[0]) {
+		t.Errorf("Nodes %v and %v should be equal.", childNode1, n.Children[0])
+	}
+	if !childNode2.IsEqual(n.Children[1]) {
+		t.Errorf("Nodes %v and %v should be equal.", childNode2, n.Children[1])
+	}
+	if !n.IsEqual(childNode1.Parent) {
+		t.Errorf("Nodes %v and %v should be equal.", n, childNode1.Parent)
+	}
+	if !n.IsEqual(childNode2.Parent) {
+		t.Errorf("Nodes %v and %v should be equal.", n, childNode2.Parent)
+	}
+}

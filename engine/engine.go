@@ -10,6 +10,7 @@ import (
 //Engine struct represent engine for solving sudoku game.
 type Engine struct {
 	game *structures.Game
+	Plan
 }
 
 //PrintStatus dispalys solution cells of the game.
