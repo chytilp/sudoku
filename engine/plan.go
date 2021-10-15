@@ -1,93 +1,130 @@
 package engine
 
 import (
-	"fmt"
-	"sort"
-	"strings"
-
-	"github.com/chytilp/sudoku/structures"
 	"github.com/chytilp/sudoku/tree"
-	"github.com/chytilp/sudoku/utils"
+)
+
+const (
+	doneTrue  = "done: true"
+	doneFalse = "done: false"
 )
 
 //Plan represents all found solutions of 1 game.
 type Plan struct {
-	Paths []*tree.Node
+	solutionTree *tree.Tree
+	current      *tree.Node
+	orderNum     byte
 }
 
-//AddNode insert new node into plan.
-func (p *Plan) AddNode(node *tree.Node, rootNodeID string, parentPath string) error {
-	//rootNodeID is empty, add node to root.
-	if len(rootNodeID) == 0 {
-		p.Paths = append(p.Paths, node)
+//NewPlan create instance of Plan object.
+func NewPlan() *Plan {
+	return &Plan{
+		solutionTree: tree.NewTree(10),
+	}
+}
+
+//AddNodes method add nodes to plan.
+func (p *Plan) AddNodes(solutionNode string, otherNodes []string) {
+	n := p.createNode(solutionNode, true)
+	parentID := ""
+	if p.current != nil {
+		parentID = p.current.ID
+	}
+	p.solutionTree.AddNode(n, parentID)
+	p.current = n
+	for _, nID := range otherNodes {
+		otherNode := p.createNode(nID, false)
+		p.solutionTree.AddNode(otherNode, parentID)
+	}
+}
+
+//FindNearest method returns nearest undone node.
+func (p *Plan) FindNearest() *tree.Node {
+	if p.current == nil {
 		return nil
 	}
-	//find rootNodeID between nodes in root.
-	var rootNode *tree.Node
-	for _, rootNode = range p.Paths {
-		if rootNode.ID == rootNodeID {
-			break
-		}
+	if !p.isNodeDone(p.current) {
+		return p.current
 	}
-	if rootNode == nil {
-		return fmt.Errorf("RootNodeID: %s was not found in plan", rootNodeID)
+	var parent *tree.Node
+	if p.current.Parent != nil {
+		parent = p.current.Parent
 	}
-	//parentPath empty add to root node.
-	if len(parentPath) == 0 {
-		rootNode.AddChild(node)
-		return nil
-	}
-	//TODO: simplify, it is really strange
-	parentNodePaths := strings.Split(parentPath, "/")
-	previous := rootNode
-	for _, parentNodePath := range parentNodePaths {
-		parentNode := p.findNodeByID(previous, parentNodePath)
-		if parentNode == nil {
-			return fmt.Errorf("ParentNodeID: %s was not found in plan", parentNodePath)
-		}
-		if parentNodePath == parentNodePaths[len(parentNodePaths)-1] {
-			//is it last part?
-			parentNode.AddChild(node)
-		} else {
-			previous = parentNode
-		}
-	}
-	return nil
+	return p.findNearestRecursive(parent)
 }
 
-//FindNode method searches for node by ID in branch which is expressed by rootNodeId.
-func (p *Plan) FindNode(rootNodeID string, wantedNodeID string) (*tree.Node, error) {
-	var root *tree.Node
-	for _, root = range p.Paths {
-		if root.ID == strings.ToLower(rootNodeID) {
-			break
-		}
-	}
-	if root == nil {
-		return nil, fmt.Errorf("RootNode Id: %s was not found in plan", rootNodeID)
-	}
-	return p.findNodeByID(root, wantedNodeID), nil
+//FindNode method finds node by its ID.
+func (p *Plan) FindNode(ID string) *tree.Node {
+	return p.solutionTree.FindNode(ID)
 }
 
-//findNodeByID method searches for node by ID in rootNode branch.
-func (p *Plan) findNodeByID(rootNode *tree.Node, wantedNodeID string) *tree.Node {
-	for _, child := range rootNode.Children {
-		if child.ID == strings.ToLower(wantedNodeID) {
+//SetCurrent method set node as current and set it as done:true
+func (p *Plan) SetCurrent(node *tree.Node) {
+	node.Data = doneTrue
+	p.current = node
+}
+
+func (p *Plan) findNearestRecursive(node *tree.Node) *tree.Node {
+	var children []*tree.Node
+	if node == nil {
+		children = p.solutionTree.RootNodes()
+	} else {
+		children = node.Children
+	}
+	for _, child := range children {
+		if !p.isNodeDone(child) {
 			return child
 		}
-		subChild := p.findNodeByID(child, wantedNodeID)
-		if subChild != nil {
-			return subChild
-		}
 	}
-	return nil
+	if node == nil {
+		return nil
+	}
+	return p.findNearestRecursive(node.Parent)
 }
 
+func (p *Plan) isNodeDone(node *tree.Node) bool {
+	return node.Data == doneTrue
+}
+
+func (p *Plan) createNode(id string, done bool) *tree.Node {
+	data := doneFalse
+	if done {
+		data = doneTrue
+	}
+	return tree.CreateNodeFull(tree.NodeParams{ID: id, Data: data})
+}
+
+//SetNodesDone method set data to done in certain nodes.
+func (p *Plan) SetNodesDone(doneNodes []string) {
+	p.setNodesUndoneRecursive(nil)
+	for _, nID := range doneNodes {
+		n := p.FindNode(nID)
+		n.Data = doneTrue
+	}
+}
+
+func (p *Plan) setNodesUndoneRecursive(node *tree.Node) {
+	var children []*tree.Node
+	if node == nil {
+		children = p.solutionTree.RootNodes()
+	} else {
+		children = node.Children
+	}
+	if children == nil {
+		return
+	}
+	for _, child := range children {
+		child.Data = doneFalse
+		p.setNodesUndoneRecursive(child)
+	}
+}
+
+/*
 //FindSolutions method searches for possible solution paths for game.
 func (p *Plan) FindSolutions(game *structures.Game) (*bool, error) {
 	//original := *game
 	engine := Engine{game: game}
-	err := p.findOneLevelSolutions(engine, "", "")
+	err := p.findOneLevelSolutions(engine, "")
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +132,7 @@ func (p *Plan) FindSolutions(game *structures.Game) (*bool, error) {
 	return &ok, nil
 }
 
-func (p *Plan) findOneLevelSolutions(engine Engine, rootNode string, parentNode string) error {
+func (p *Plan) findOneLevelSolutions(engine Engine, parentNode string) error {
 	bestCandidates, err := engine.SelectBestCandidates()
 	if err != nil {
 		return err
@@ -103,59 +140,11 @@ func (p *Plan) findOneLevelSolutions(engine Engine, rootNode string, parentNode 
 	for cellID, values := range bestCandidates {
 		for _, value := range values {
 			c := tree.CreateNode(cellID + "=" + fmt.Sprintf("%d", value))
-			p.AddNode(c, rootNode, parentNode)
+			if err := p.solutionTree.AddNode(c, parentNode); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
-
-//Display returns text represantion of tree.
-func (p *Plan) Display(sep string) string {
-	var result []string
-	root := tree.CreateNode("")
-	root.AddChildren(p.Paths)
-	p.walk(root, &result, sep)
-	return strings.Join(result, "\n")
-}
-
-//Auxiliary method for Display. Sort children nodes.
-func (p *Plan) sortChildren(children []*tree.Node) []*tree.Node {
-	ids := make([]string, len(children))
-	nodes := make(map[string]*tree.Node)
-	for idx, child := range children {
-		ids[idx] = child.ID
-		nodes[child.ID] = child
-	}
-	sort.Strings(ids)
-	sorted := make([]*tree.Node, len(children))
-	for idx, id := range ids {
-		sorted[idx] = nodes[id]
-
-	}
-	return sorted
-}
-
-//Auxiliary method for Display. Walk through nodes.
-func (p *Plan) walk(n *tree.Node, result *[]string, sep string) {
-	children := p.sortChildren(n.Children)
-	for _, child := range children {
-		if child.Children == nil {
-			p.printNodeLine(child, sep, result)
-		} else {
-			p.walk(child, result, sep)
-		}
-	}
-}
-
-//Auxiliary method for Display. Puts Node to output slice.
-func (p *Plan) printNodeLine(n *tree.Node, sep string, output *[]string) {
-	result := []string{}
-	node := n
-	for node != nil && len(node.ID) > 0 {
-		result = append(result, node.ID)
-		node = node.Parent
-	}
-	utils.ReverseSlice(result)
-	line := strings.Join(result, sep)
-	*output = append(*output, line)
-}
+*/

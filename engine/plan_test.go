@@ -1,72 +1,16 @@
 package engine
 
 import (
-	"fmt"
+	"strings"
 	"testing"
 
-	"github.com/chytilp/sudoku/structures"
 	"github.com/chytilp/sudoku/tree"
 	"github.com/google/go-cmp/cmp"
 )
 
-func createPlan() *Plan {
-	plan := Plan{}
-	plan.AddNode(tree.CreateNode("a"), "", "")
-	plan.AddNode(tree.CreateNode("b"), "", "")
-	plan.AddNode(tree.CreateNode("c"), "", "")
-	plan.AddNode(tree.CreateNode("a1"), "a", "")
-	plan.AddNode(tree.CreateNode("a2"), "a", "")
-	plan.AddNode(tree.CreateNode("a11"), "a", "a1")
-	plan.AddNode(tree.CreateNode("a12"), "a", "a1")
-	plan.AddNode(tree.CreateNode("a111"), "a", "a11")
-	plan.AddNode(tree.CreateNode("a112"), "a", "a11")
-	plan.AddNode(tree.CreateNode("a113"), "a", "a11")
-	return &plan
-}
-
-func TestPlanShouldFindNode(t *testing.T) {
-	expectedID := "a113"
-	plan := createPlan()
-	node, err := plan.FindNode("a", expectedID)
-	if err != nil {
-		t.Errorf("FindNode should return node, but appears error: %v", err)
-	}
-	if node.ID != expectedID {
-		t.Errorf("FindNode returns node: %s, but expected nodeID: %s", node, expectedID)
-	}
-	expectedParentID := "a11"
-	if node.Parent.ID != expectedParentID {
-		t.Errorf("FindNode parent node id: %s, but expected nodeID: %s", node.Parent.ID, expectedParentID)
-	}
-	expectedParentParentID := "a1"
-	if node.Parent.Parent.ID != expectedParentParentID {
-		t.Errorf("FindNode parent parent node id: %s, but expected nodeID: %s", node.Parent.Parent.ID,
-			expectedParentParentID)
-	}
-	expectedParentParentParentID := "a"
-	if node.Parent.Parent.Parent.ID != expectedParentParentParentID {
-		t.Errorf("FindNode parent parent parent node id: %s, but expected nodeID: %s",
-			node.Parent.Parent.Parent.ID, expectedParentParentParentID)
-	}
-}
-
-func TestPlanShouldBeCorrectlyDisplayed(t *testing.T) {
-	plan := createPlan()
-	representation := plan.Display(" - ")
-	expected := "a - a1 - a11 - a111\n" +
-		"a - a1 - a11 - a112\n" +
-		"a - a1 - a11 - a113\n" +
-		"a - a1 - a12\n" +
-		"a - a2\n" +
-		"b\n" +
-		"c"
-	if diff := cmp.Diff(representation, expected); diff != "" {
-		t.Errorf("Plan display returns: %s\n, but expected: %s\n, diff: %s\n", representation, expected, diff)
-	}
-}
-
+/*
 func TestPlanFindSolutions(t *testing.T) {
-	plan := Plan{}
+	plan := NewPlan()
 	g, err := structures.NewGameFromString(game1)
 	if err != nil {
 		t.Errorf("Game should be succesfully created, but err: %v", err)
@@ -78,7 +22,101 @@ func TestPlanFindSolutions(t *testing.T) {
 	if !*ok {
 		t.Errorf("FindSolutions should return ok.")
 	}
-	for _, n := range plan.Paths {
-		fmt.Printf("%s", n.String())
+	solutions := make(map[string]bool)
+	for _, n := range plan.solutionTree.RootNodes() {
+		solutions[n.ID] = true
+		fmt.Printf("%s\n", n.ID)
 	}
+}*/
+
+func createPlan() *Plan {
+	p := NewPlan()
+	p.AddNodes("a", []string{"b", "c", "d"})
+	p.AddNodes("a1", []string{"a2", "a3", "a4"})
+	p.AddNodes("a11", []string{"a12", "a13", "a14"})
+	p.AddNodes("a111", []string{"a112", "a113", "a114"})
+	p.SetCurrent(p.FindNode("b"))
+	p.AddNodes("b1", []string{"b2", "b3"})
+	p.AddNodes("b11", []string{"b12", "b13"})
+	p.SetCurrent(p.FindNode("c"))
+	p.AddNodes("c1", []string{"c2"})
+	return p
+}
+
+func TestPlanAddNodes(t *testing.T) {
+	p := createPlan()
+	schema := p.solutionTree.Display(" - ")
+	expected := "a - a1 - a11 - a111\n" +
+		"a - a1 - a11 - a112\n" +
+		"a - a1 - a11 - a113\n" +
+		"a - a1 - a11 - a114\n" +
+		"a - a1 - a12\n" +
+		"a - a1 - a13\n" +
+		"a - a1 - a14\n" +
+		"a - a2\n" +
+		"a - a3\n" +
+		"a - a4\n" +
+		"b - b1 - b11\n" +
+		"b - b1 - b12\n" +
+		"b - b1 - b13\n" +
+		"b - b2\n" +
+		"b - b3\n" +
+		"c - c1\n" +
+		"c - c2\n" +
+		"d"
+	if diff := cmp.Diff(schema, expected); diff != "" {
+		t.Errorf("Plan display returns: %s, but expected: %s, diff: %s\n", schema, expected, diff)
+	}
+}
+
+func TestPlanSetNodesDone(t *testing.T) {
+	p := createPlan()
+	ids := make([]string, 0, 25)
+	ids = getDoneNodeIds(p.solutionTree.RootNodes(), ids)
+	idecka := strings.Join(ids, ",")
+	expected := "a,a1,a11,a111,b,b1,b11,c,c1"
+	if diff := cmp.Diff(idecka, expected); diff != "" {
+		t.Errorf("Plan done nodes ids: %s, but expected: %s, diff: %s\n", idecka, expected, diff)
+	}
+	p.SetNodesDone([]string{"a", "a1", "a11", "a111"})
+	ids = make([]string, 0, 25)
+	ids = getDoneNodeIds(p.solutionTree.RootNodes(), ids)
+	idecka = strings.Join(ids, ",")
+	expected = "a,a1,a11,a111"
+	if diff := cmp.Diff(idecka, expected); diff != "" {
+		t.Errorf("Plan done nodes ids: %s, but expected: %s, diff: %s\n", idecka, expected, diff)
+	}
+}
+
+func TestPlanFindNearest(t *testing.T) {
+	p := createPlan()
+	p.SetNodesDone([]string{"a", "a1", "a11", "a111"})
+	p.SetCurrent(p.FindNode("a111"))
+	nearest := []string{"a112", "a113", "a114", "a12", "a13", "a14", "a2", "a3", "a4", "b", "c", "d"}
+	var n *tree.Node
+	for _, next := range nearest {
+		n = p.FindNearest()
+		if n.ID != next {
+			t.Errorf("Plan FindNearest returns: %s, but expected: %s", n.ID, next)
+		}
+		p.SetCurrent(n)
+	}
+	//nothing more nearest
+	n = p.FindNearest()
+	if n != nil {
+		t.Errorf("Plan FindNearest should not returns next node, but returned: %s\n", n.ID)
+	}
+}
+
+func getDoneNodeIds(nodes []*tree.Node, ids []string) []string {
+	if nodes == nil {
+		return ids
+	}
+	for _, n := range nodes {
+		if n.Data == doneTrue {
+			ids = append(ids, n.ID)
+		}
+		ids = getDoneNodeIds(n.Children, ids)
+	}
+	return ids
 }

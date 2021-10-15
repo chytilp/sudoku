@@ -178,6 +178,17 @@ func (g *Game) FilledCellCount() uint8 {
 	return uint8(len(g.cells))
 }
 
+//SolutionCellCount returns count of solution cells in game.
+func (g *Game) SolutionCellCount() uint8 {
+	count := uint8(0)
+	for _, c := range g.cells {
+		if c.SolutionCell() {
+			count++
+		}
+	}
+	return count
+}
+
 //Validate method makes validation of the game and returns
 // if problem is in rows, columns or squares.
 func (g *Game) Validate() (*bool, *bool, *bool, error) {
@@ -264,6 +275,16 @@ func (g *Game) ShowSolutionCells() {
 	for _, c := range g.cells {
 		if c.SolutionCell() {
 			fmt.Printf("%s\n", c)
+		}
+	}
+}
+
+//RemoveSolutionCells method remove solution cells from parameters from game.
+func (g *Game) RemoveSolutionCells(cellIds []string) {
+	for _, cellID := range cellIds {
+		cell, ok := g.cells[cellID]
+		if ok && cell.SolutionCell() {
+			delete(g.cells, cellID)
 		}
 	}
 }

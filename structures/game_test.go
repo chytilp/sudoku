@@ -149,3 +149,33 @@ func TestGameEmptyCells(t *testing.T) {
 		t.Errorf("Game empty cells are %v, but expected was: %v", cells, expected)
 	}
 }
+
+func TestGameRemoveSolutionCells(t *testing.T) {
+	g, err := NewGameFromString(game1)
+	if err != nil {
+		t.Errorf("Game should be succesfully created, but err: %v", err)
+	}
+	g.AddCell(createSolutionCell("b1", 2))
+	g.AddCell(createSolutionCell("a2", 3))
+	g.AddCell(createSolutionCell("a7", 6))
+	cellCount := int(g.SolutionCellCount())
+	expectedCount := 3
+	if cellCount != expectedCount {
+		t.Errorf("Game solution cells should be: %d, but is %d", expectedCount, cellCount)
+	}
+	forRemove := []string{"b1", "a2"}
+	g.RemoveSolutionCells(forRemove)
+	cellCount = int(g.SolutionCellCount())
+	expectedCount = 1
+	if cellCount != expectedCount {
+		t.Errorf("Game solution cells should be: %d, but is %d", expectedCount, cellCount)
+	}
+}
+
+func createSolutionCell(id string, value byte) *Cell {
+	cell, err := NewSolutionCell(id, value)
+	if err != nil {
+		return nil
+	}
+	return cell
+}

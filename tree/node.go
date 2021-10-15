@@ -42,7 +42,7 @@ func CreateNode(ID string) *Node {
 // -- Public methods --
 //String returns node representation.
 func (n Node) String() string {
-	return fmt.Sprintf("<Node id=%s, data=%s >", n.ID, n.Data)
+	return fmt.Sprintf("<Node id=%s, data=%s>", n.ID, n.Data)
 }
 
 //AddChild method adds new node to child collection.
