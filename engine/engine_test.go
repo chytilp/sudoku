@@ -24,7 +24,7 @@ func TestEngineShouldFinishGame(t *testing.T) {
 	if err != nil {
 		t.Errorf("Game should be succesfully created, but err: %v", err)
 	}
-	engine := Engine{game: g}
+	engine := NewEngine(g)
 	var counter int
 	var stepOk *bool
 	for !engine.IsFinished() {
@@ -41,7 +41,7 @@ func TestEngineShouldFinishGame(t *testing.T) {
 			break
 		}
 	}
-	checkGameIsFinished(t, &engine)
+	checkGameIsFinished(t, engine)
 }
 
 func TestEngineShouldFindNextStepCandidates(t *testing.T) {
@@ -49,7 +49,7 @@ func TestEngineShouldFindNextStepCandidates(t *testing.T) {
 	if err != nil {
 		t.Errorf("Game should be succesfully created, but err: %v", err)
 	}
-	engine := Engine{game: g}
+	engine := NewEngine(g)
 	candidates, err := engine.nextStepCandidates()
 	if err != nil {
 		t.Errorf("Game should find next step candidates, but err: %v", err)
@@ -87,7 +87,7 @@ func TestEngineShouldFindBestCandidates(t *testing.T) {
 	if err != nil {
 		t.Errorf("Game should be succesfully created, but err: %v", err)
 	}
-	engine := Engine{game: g}
+	engine := NewEngine(g)
 	bestCandidates, err := engine.SelectBestCandidates()
 	if err != nil {
 		t.Errorf("Game should find best candidates, but err: %v", err)

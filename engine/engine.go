@@ -10,7 +10,16 @@ import (
 //Engine struct represent engine for solving sudoku game.
 type Engine struct {
 	game *structures.Game
-	Plan
+	p    *Plan
+}
+
+//NewEngine method is Engine object constructor.
+func NewEngine(g *structures.Game) *Engine {
+	e := Engine{
+		game: g,
+		p:    NewPlan(),
+	}
+	return &e
 }
 
 //PrintStatus dispalys solution cells of the game.
